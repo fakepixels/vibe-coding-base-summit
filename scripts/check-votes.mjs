@@ -2,6 +2,7 @@
 import { Redis } from '@upstash/redis';
 
 // Create Redis client using environment variables
+// Note: For Upstash Redis client, use the REST API URL (https://) not the Redis URL (rediss://)
 const redis = new Redis({
   url: "https://working-weevil-12729.upstash.io",
   token: "ATG5AAIjcDEzNjk2ZjYwYmM2NTY0ODc3ODE5ZTA0ZjY4Yjg3MDAyNHAxMA"

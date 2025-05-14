@@ -22,6 +22,7 @@ import {
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Button, Icon, Card } from "./components/DemoComponents";
 import { useAccount } from "wagmi";
+import { getApiUrl } from "@/lib/api-utils";
 
 // Poll component to handle voting functionality
 function Poll() {
@@ -33,6 +34,7 @@ function Poll() {
   const [showThankYou, setShowThankYou] = useState(false);
   const [voteCounts, setVoteCounts] = useState<number[]>([0, 0, 0, 0, 0]);
   const [totalVotes, setTotalVotes] = useState(0);
+  // Get the notification function, but handle it gracefully if it's not available
   const sendNotification = useNotification();
 
   // Fetch poll data on component mount and when address changes
@@ -43,7 +45,7 @@ function Poll() {
         setError(null);
         
         // Fetch poll data from API
-        const response = await fetch('/api/poll');
+        const response = await fetch(getApiUrl('/api/poll'));
         
         if (!response.ok) {
           throw new Error('Failed to fetch poll data');
@@ -61,7 +63,7 @@ function Poll() {
         
         // Check if current user has voted
         if (address) {
-          const userResponse = await fetch(`/api/poll/user?address=${address}`).catch(() => null);
+          const userResponse = await fetch(getApiUrl(`/api/poll/user?address=${address}`)).catch(() => null);
           if (userResponse?.ok) {
             const userData = await userResponse.json();
             setHasVoted(userData.hasVoted);
@@ -91,7 +93,7 @@ function Poll() {
       setError(null);
       
       // Submit vote to API
-      const response = await fetch('/api/poll', {
+      const response = await fetch(getApiUrl('/api/poll'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -118,11 +120,18 @@ function Poll() {
       setHasVoted(true);
       setShowThankYou(true);
       
-      // Send a notification
-      await sendNotification({
-        title: "Thank You for Voting!",
-        body: `You&apos;ve successfully voted for option ${option}.`,
-      });
+      // Send a notification (if available)
+      try {
+        if (sendNotification) {
+          await sendNotification({
+            title: "Thank You for Voting!",
+            body: `You&apos;ve successfully voted for option ${option}.`,
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to send notification:', err);
+        // Continue execution even if notification fails
+      }
       
       // Hide the thank you popup after 3 seconds
       setTimeout(() => {
